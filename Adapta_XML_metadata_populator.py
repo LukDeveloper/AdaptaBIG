@@ -20,11 +20,10 @@ namespaces = {
 for prefix, uri in namespaces.items():
     ET.register_namespace(prefix, uri)
     
-
-def get_location_url(api_url):
-    #Função para obter a URL de download a partir da API do AdaptaBrasil.
-    #parametro = api_url: URL da API que retorna o JSON com o campo 'location'.
-    #return = URL de download contida no campo 'location', ou uma mensagem de erro.    
+# Função para obter a URL de download a partir da API do AdaptaBrasil.
+# parametro = api_url: URL da API que retorna o JSON com o campo 'location'.
+# return = URL de download contida no campo 'location', ou uma mensagem de erro.
+def get_location_url(api_url):        
     try:
         # Fazendo a requisição
         with urllib.request.urlopen(api_url) as response:
@@ -43,11 +42,11 @@ def get_location_url(api_url):
     
     except Exception as e:
         return f"Ocorreu um erro: {str(e)}"
-    
-def remover_quebras(complete_description):
-    #Remove todas as ocorrências de <br> do texto fornecido.
-    #Args: complete_description (str): O texto completo contendo as quebras de linha.
-    #Returns: str: O texto formatado sem as ocorrências de <br>.    
+        
+# Remove todas as ocorrências de <br> do texto fornecido.
+# Args: complete_description (str): O texto completo contendo as quebras de linha.
+# Returns: str: O texto formatado sem as ocorrências de <br>.     
+def remover_quebras(complete_description):      
     return complete_description.replace("<br>", " ")
 
 def getScenarios(dict_scenarios: dict)->str:
@@ -59,6 +58,11 @@ def getScenarios(dict_scenarios: dict)->str:
 def update_xml_indicator_with_data(xml_template, indicador: list, years: list):
     tree = ET.ElementTree(ET.fromstring(xml_template))
     root = tree.getroot()
+
+    # Adicionando valor para o "UUID = Identificador de metadados"
+    file_identifier_elem = root.find('.//gmd:fileIdentifier/gco:CharacterString', namespaces)
+    if file_identifier_elem is not None:
+        file_identifier_elem.text = f"{schema}{indicador['id']}"
 
     # Adicionando valor para o "Título"
     title = root.find('.//gmd:title/gco:CharacterString', namespaces)
@@ -82,8 +86,7 @@ def update_xml_indicator_with_data(xml_template, indicador: list, years: list):
     """keywords = root.findall('.//gmd:keyword/gco:CharacterString', namespaces)
     for i, keyword in enumerate(keywords):
         key = f'keyword_{i+1}'
-        keyword.text = indicador.get(key, '')"""
-        
+        keyword.text = indicador.get(key, '')"""        
         
     # Adicionando valor para "Recursos Online" e "Descrição do recurso online"
     # Identificar o protocolo para diferenciar os recursos
@@ -117,9 +120,7 @@ def update_xml_indicator_with_data(xml_template, indicador: list, years: list):
         
     return tree
 
-
 # Dados AdaptaBrasil
-
 url_hierarchy = 'https://sistema.adaptabrasil.mcti.gov.br/api/hierarquia/adaptabrasil'
 
 if __name__ == '__main__':
@@ -127,18 +128,18 @@ if __name__ == '__main__':
     indicadores = json.load(url)
 
     # Caminho para Template XML ISO19115/19139
-    with open('input.xml', 'r', encoding='utf-8') as file:
+    with open('/kaggle/input/testefinal/input (1).xml', 'r', encoding='utf-8') as file:
         xml_template = file.read()
 
     # Diretório para salvar os arquivos XML de saída
-    output_dir = 'output_xml_files'
+    output_dir = '/kaggle/working/'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Gera arquivos XML para cada registro
-    # for i, record in enumerate(exemplo_dados, start=1):
-    #     tree = update_xml_with_data(xml_template, record)
-    #     output_file = os.path.join(output_dir, f'record_{i}.xml')
-    #     tree.write(output_file, encoding='UTF-8', xml_declaration=True)
+# Gera arquivos XML para cada registro
+# for i, record in enumerate(exemplo_dados, start=1):
+#     tree = update_xml_with_data(xml_template, record)
+#     output_file = os.path.join(output_dir, f'record_{i}.xml')
+#     tree.write(output_file, encoding='UTF-8', xml_declaration=True)
 num_arquivos_gerados = 0  # Contador para arquivos gerados
 
 for i, indicador in enumerate(indicadores):
@@ -157,7 +158,7 @@ for i, indicador in enumerate(indicadores):
     tree = update_xml_indicator_with_data(xml_template, indicador, years)
     
     # Salvando o arquivo XML
-    output_file = os.path.join(output_dir, f'record_{i}.xml')
+    output_file = os.path.join(output_dir, f"{indicador['title']}record_{i}.xml")
     tree.write(output_file, encoding='UTF-8', xml_declaration=True)
     
     num_arquivos_gerados += 1  # Incrementa o contador para cada arquivo gerado
